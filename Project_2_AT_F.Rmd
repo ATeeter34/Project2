@@ -1,0 +1,97 @@
+---
+title: "Project_2"
+author: "Anthony Teeter"
+date: "3/11/2021"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Our goal of this project is to predict the benign or malignant class for the breast cancer data set. We will do this by using different classification methods and also choose the most frequent predicted value for each model. 
+
+We start by cleaning and loading the breast cancer data. We need to remove the ID as it is useless for the models, and we remove missing values to prevent any errors with the classification models. 
+
+```{r}
+require(mlbench)
+# load the data set
+data(BreastCancer)
+# some algorithms don't like missing values, so remove rows with missing values
+BreastCancer <- na.omit(BreastCancer) 
+# remove the unique identifier, which is useless and would confuse the machine learning algorithms
+BreastCancer$Id <- NULL 
+```
+
+The first model is the support vector classification method. We use this method and look at a table to understand the predictied values.  
+
+```{r}
+library(e1071)
+mysvm <- svm(BreastCancer$Class ~ ., BreastCancer)
+mysvm.pred <- predict(mysvm, BreastCancer)
+table(mysvm.pred,BreastCancer$Class)
+```
+
+The second model is the Naive Bayes classification method. We use this method and look at a table to understand the predictied values.  
+
+```{r}
+library(klaR)
+mynb <- NaiveBayes(BreastCancer$Class ~ ., BreastCancer)
+mynb.pred <- predict(mynb,BreastCancer)
+table(mynb.pred$class,BreastCancer$Class)
+
+```
+
+The third model is the Decision Tree classification method. We use this method and look at a table to understand the predictied values.  
+
+```{r}
+library(MASS)
+#Decision trees
+library(rpart)
+mytree <- rpart(BreastCancer$Class ~ ., BreastCancer)
+#plot(mytree); text(mytree) # in "BreastCancer_tree.ps"
+#summary(mytree)
+mytree.pred <- predict(mytree,BreastCancer,type="class")
+table(mytree.pred,BreastCancer$Class)
+```
+
+
+The fourth model is the Regularized Discriminant Analysis classification method. We use this method and look at a table to understand the predictied values.  
+
+```{r}
+#Regularised Discriminant Analysis
+library(klaR)
+myrda <- rda(BreastCancer$Class ~ ., BreastCancer)
+myrda.pred <- predict(myrda, BreastCancer)
+table(myrda.pred$class,BreastCancer$Class)
+            
+```
+
+The final model is the Random Forests classification method. We use this method and look at a table to understand the predictied values.  
+
+```{r}
+#Random Forests
+library(randomForest)
+myrf <- randomForest(BreastCancer$Class ~ .,BreastCancer)
+myrf.pred <- predict(myrf, BreastCancer)
+table(myrf.pred, BreastCancer$Class)
+```
+
+Now we want to compare the classification models and choose the most frequent predicted value. We start by creating the data frame for the predicted values after organizing the data. After we create the data frame we want to look at the mode for the predicted values to ultimately find the most predicted value for each row. We Create the Mode.Column and can now join that to have a data frame with all of our predicted values that can be used to predict if the class of the breast cancer data set. 
+
+```{r}
+#Organize values for classification models
+Nb.c <- mynb.pred$class
+SVM.c <- mysvm.pred
+DT.c <- mytree.pred
+RDA.c <- myrda.pred$class
+rf.c <- myrf.pred
+#Create data frame with the predicted values
+Pred.df <- t(as.data.frame(rbind(Nb.c, SVM.c, DT.c, RDA.c, rf.c)))
+#Create Mode Column
+Mode.Column <- apply(Pred.df, 1, function(idx) which.max(tabulate(idx)))
+#Create data frame to show all predicted values and mode for predicted values
+Final.df <- t(as.data.frame(rbind(mynb.pred$class, mysvm.pred, mytree.pred, myrda.pred$class, myrf.pred, Mode.Column)))
+```
+
+
